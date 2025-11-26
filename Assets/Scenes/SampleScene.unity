@@ -1433,7 +1433,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 828451726}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1910892618}
+        m_TargetAssemblyTypeName: GripStrengthEstimator, Assembly-CSharp
+        m_MethodName: CaptureStrongLevel
+        m_Mode: 4
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &828451726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2966,10 +2978,6 @@ MonoBehaviour:
   windowSec: 1
   wStdB: 0.3
   wPeakB: 0.2
-  wAcc: 0.25
-  wGyr: 0.15
-  wTouch: 0.1
-  useTouchProxy: 1
 --- !u!4 &1910892619
 Transform:
   m_ObjectHideFlags: 0
