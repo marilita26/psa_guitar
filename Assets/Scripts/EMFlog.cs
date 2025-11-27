@@ -88,18 +88,24 @@ public class EMFlog : MonoBehaviour
         Debug.Log("[EMFlog] Logging STARTED.");
     }
 
-    // Κουμπί 2: STOP & SAVE
     public void StopAndSave()
     {
+        if (!logging)
+        {
+            Debug.LogWarning("[EMFlog] StopAndSave called but logging = false. Ignoring.");
+            return;
+        }
+
         logging = false;
         Debug.Log("[EMFlog] Logging STOPPED.");
 
-        // 1) Σώσε τα raw σε CSV
         string csvPath = SaveCSV();
-
-        // 2) Ενημέρωσε / φτιάξε τη JSON "βάση δεδομένων"
         SaveToJsonDB(csvPath);
+
+        // Ξεφορτώσου τα παλιά δείγματα για την επόμενη συνεδρία
+        samples.Clear();
     }
+
 
     // ----------------- CSV SAVE -----------------
     // Σώζει τα raw samples σε CSV και επιστρέφει το path του αρχείου
@@ -116,10 +122,12 @@ public class EMFlog : MonoBehaviour
 
             using (var sw = new StreamWriter(filePath))
             {
-                sw.WriteLine("t_ms,bx,by,bz,magnitude");
+                sw.WriteLine("t_ms;bx;by;bz;magnitude");
+
                 foreach (var s in samples)
                 {
-                    sw.WriteLine($"{s.t_ms:F1},{s.bx:F4},{s.by:F4},{s.bz:F4},{s.magnitude:F4}");
+                    sw.WriteLine($"{s.t_ms:F1};{s.bx:F4};{s.by:F4};{s.bz:F4};{s.magnitude:F4}");
+
                 }
             }
 
