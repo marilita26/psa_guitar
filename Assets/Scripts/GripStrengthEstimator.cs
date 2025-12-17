@@ -14,7 +14,7 @@ public class GripStrengthEstimator : MonoBehaviour
 
     [Header("Motion gating (ignore motion)")]
     [Tooltip("Όσο μεγαλύτερο, τόσο πιο δύσκολα θεωρεί 'κίνηση'. Δοκίμασε 0.08–0.20.")]
-    public float motionAccThresh = 0.18f;   // σε g units (περίπου)
+    public float motionAccThresh = 0.18f;   
     [Tooltip("Πόσο δυνατά 'κόβει' το mag όταν υπάρχει κίνηση.")]
     [Range(0f, 1f)] public float motionSuppress = 0.6f; // 1 = πλήρες κόψιμο
     [Range(0.01f, 0.3f)] public float motionLP = 0.12f;
@@ -45,10 +45,10 @@ public class GripStrengthEstimator : MonoBehaviour
     [HideInInspector] public float dbg_zTouch;
 
     [HideInInspector] public float dbg_accMag;
-    [HideInInspector] public float dbg_motion;     // 0..1
+    [HideInInspector] public float dbg_motion;     
     [HideInInspector] public bool dbg_isMoving;
 
-    // State
+  
     float baselineBmag = 0f;
     float smoothBmag = 0f;
     float baselineTouch = 0f;
@@ -62,9 +62,9 @@ public class GripStrengthEstimator : MonoBehaviour
     void Start()
     {
         Input.compass.enabled = true;
-        Input.location.Start(); // σημαντικό για compass σε Android
+        Input.location.Start(); 
 
-        // accelerometer υπάρχει by default στο Unity via Input.acceleration
+       
         t0 = Time.realtimeSinceStartup;
         Debug.Log("[Grip v4] Start. (Orientation-safe |B| + motion gating)");
     }
@@ -73,12 +73,11 @@ public class GripStrengthEstimator : MonoBehaviour
     {
         float t = Time.realtimeSinceStartup - t0;
 
-        // --- Magnetometer raw vector + magnitude ---
         Vector3 rawB = Input.compass.rawVector;
         bool magLooksDead = rawB.sqrMagnitude < 1e-6f;
-        float Bmag = rawB.magnitude; // ΜΟΝΟ μέτρο (orientation-safe)
+        float Bmag = rawB.magnitude; // ΜΟΝΟ μέτρο 
 
-        // --- Touch radius (optional) ---
+      
         bool hasTouch = Input.touchCount > 0;
         float touchRadius = 0f;
 
@@ -90,24 +89,22 @@ public class GripStrengthEstimator : MonoBehaviour
 
             touchRadius = sum / Input.touchCount;
 
-            // fallback αν radius=0
+         
             if (touchRadius <= 0f) touchRadius = baselineTouch + 20f;
         }
 
-        // --- Motion estimate from accelerometer ---
-        // Input.acceleration ~ includes gravity, magnitude ~ 1g at rest
         float accMag = Input.acceleration.magnitude;
         smoothAccMag = Mathf.Lerp(smoothAccMag, accMag, motionLP);
 
 
         float accDeltaFrom1g = Mathf.Abs(smoothAccMag - 1f);
 
-        // motion in 0..1 (soft)
+       
         float motion = Mathf.InverseLerp(motionAccThresh, motionAccThresh * 2f, accDeltaFrom1g);
         motion = Mathf.Clamp01(motion);
         if (!hasTouch && motion < 0.05f)
         {
-            // σιγά-σιγά προσαρμόζει baseline στο νέο περιβάλλον όταν είναι ακίνητο
+         
             baselineBmag = Mathf.Lerp(baselineBmag, Bmag, 0.02f);
             baselineTouch = Mathf.Lerp(baselineTouch, 0f, 0.05f);
         }
@@ -115,7 +112,7 @@ public class GripStrengthEstimator : MonoBehaviour
 
         bool isMoving = motion > 0.01f;
 
-        // --- Baseline phase ---
+        //Baseline phase
         if (!baselineDone)
         {
             if (t < baselineSec)
@@ -136,22 +133,19 @@ public class GripStrengthEstimator : MonoBehaviour
             Debug.Log($"[Grip v4] BaselineBmag={baselineBmag:F3}, baselineTouch={baselineTouch:F2}");
         }
 
-        // --- Low-pass on B magnitude ---
+        // Low-pass magnitude
         smoothBmag = Mathf.Lerp(smoothBmag, Bmag, magLP);
-        // --- very slow baseline for high-pass (environment) ---
-        slowBmag = Mathf.Lerp(slowBmag, Bmag, 0.01f);  // πολύ αργό
+        
+        slowBmag = Mathf.Lerp(slowBmag, Bmag, 0.01f);  
         float deltaMag = Mathf.Abs(smoothBmag - slowBmag); // HIGH-PASS Δ|B|
 
-        // --- Magnetic deviation from baseline (magnitude only) ---
-       // float deltaMag = Mathf.Abs(smoothBmag - baselineBmag);
         float zMag = (magScale > 1e-6f) ? Mathf.Clamp01(deltaMag / magScale) : 0f;
 
-        // --- Motion suppression: όταν σηκώνεις/κινείς, κόβει το μαγνητικό ---
-        // motion=0 => καμία μείωση, motion=1 => πλήρης μείωση (ανάλογα με motionSuppress)
+        // Motion suppression: όταν σηκώνεις/κινείς, κόβει το μαγνητικό 
+        // motion=0 => καμία μείωση, motion=1 => πλήρης μείωση
         float suppressFactor = 1f - (motionSuppress * motion);
         zMag *= Mathf.Clamp01(suppressFactor);
 
-        // --- Touch deviation ---
         float zTouch = 0f;
         if (hasTouch)
         {
@@ -160,18 +154,16 @@ public class GripStrengthEstimator : MonoBehaviour
             zTouch = Mathf.Pow(zTouch, touchCurve);
         }
 
-        // --- Fuse ---
         float wSum = Mathf.Max(wMag + wTouch, 1e-6f);
         float z = (wMag / wSum) * zMag + (wTouch / wSum) * zTouch;
 
-        // --- deadZone + curve ---
+        //deadZone + curve 
         if (z < deadZone) z = 0f;
         else z = (z - deadZone) / (1f - deadZone);
 
         z = Mathf.Clamp01(z);
         z = Mathf.Pow(z, finalCurve);
 
-        // --- smooth output ---
         float target = 100f * z;
         GripStrengthPercent = Mathf.Lerp(GripStrengthPercent, target, smoothAlpha);
 
