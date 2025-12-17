@@ -7,8 +7,10 @@ public class GripStrengthEstimator : MonoBehaviour
 
     [Header("Magnetic (use magnitude ONLY)")]
     [Tooltip("Μικρότερο => πιο ευαίσθητο. Π.χ. 2–10 για |B|.")]
-    public float magScale = 2.7f;
+    public float magScale = 0.42f;
     [Range(0.01f, 0.3f)] public float magLP = 0.10f;
+    float slowBmag = 0f;   // very slow tracker for high-pass
+
 
     [Header("Motion gating (ignore motion)")]
     [Tooltip("Όσο μεγαλύτερο, τόσο πιο δύσκολα θεωρεί 'κίνηση'. Δοκίμασε 0.08–0.20.")]
@@ -18,10 +20,10 @@ public class GripStrengthEstimator : MonoBehaviour
     [Range(0.01f, 0.3f)] public float motionLP = 0.12f;
 
     [Header("Touch (secondary)")]
-    public float touchScale = 7f;
+    public float touchScale = 5f;
     [Range(1f, 3f)] public float touchCurve = 1f;
-    [Range(0f, 1f)] public float wMag = 0.7f;
-    [Range(0f, 1f)] public float wTouch = 0.3f;
+    [Range(0f, 1f)] public float wMag = 0.6f;
+    [Range(0f, 1f)] public float wTouch = 0.4f;
 
     [Header("Output shaping")]
     [Range(0f, 0.5f)] public float deadZone = 0.03f;
@@ -97,11 +99,19 @@ public class GripStrengthEstimator : MonoBehaviour
         float accMag = Input.acceleration.magnitude;
         smoothAccMag = Mathf.Lerp(smoothAccMag, accMag, motionLP);
 
+
         float accDeltaFrom1g = Mathf.Abs(smoothAccMag - 1f);
 
         // motion in 0..1 (soft)
         float motion = Mathf.InverseLerp(motionAccThresh, motionAccThresh * 2f, accDeltaFrom1g);
         motion = Mathf.Clamp01(motion);
+        if (!hasTouch && motion < 0.05f)
+        {
+            // σιγά-σιγά προσαρμόζει baseline στο νέο περιβάλλον όταν είναι ακίνητο
+            baselineBmag = Mathf.Lerp(baselineBmag, Bmag, 0.02f);
+            baselineTouch = Mathf.Lerp(baselineTouch, 0f, 0.05f);
+        }
+
 
         bool isMoving = motion > 0.01f;
 
@@ -128,9 +138,12 @@ public class GripStrengthEstimator : MonoBehaviour
 
         // --- Low-pass on B magnitude ---
         smoothBmag = Mathf.Lerp(smoothBmag, Bmag, magLP);
+        // --- very slow baseline for high-pass (environment) ---
+        slowBmag = Mathf.Lerp(slowBmag, Bmag, 0.01f);  // πολύ αργό
+        float deltaMag = Mathf.Abs(smoothBmag - slowBmag); // HIGH-PASS Δ|B|
 
         // --- Magnetic deviation from baseline (magnitude only) ---
-        float deltaMag = Mathf.Abs(smoothBmag - baselineBmag);
+       // float deltaMag = Mathf.Abs(smoothBmag - baselineBmag);
         float zMag = (magScale > 1e-6f) ? Mathf.Clamp01(deltaMag / magScale) : 0f;
 
         // --- Motion suppression: όταν σηκώνεις/κινείς, κόβει το μαγνητικό ---

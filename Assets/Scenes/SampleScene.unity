@@ -2160,15 +2160,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baselineSec: 2
-  magScale: 2.7
+  magScale: 0.42
   magLP: 0.1
   motionAccThresh: 0.18
   motionSuppress: 0.6
   motionLP: 0.12
-  touchScale: 7
+  touchScale: 5
   touchCurve: 1
-  wMag: 0.7
-  wTouch: 0.3
+  wMag: 0.6
+  wTouch: 0.4
   deadZone: 0.03
   finalCurve: 1.2
   smoothAlpha: 0.25
@@ -2194,8 +2194,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1910892617}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -600, z: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
