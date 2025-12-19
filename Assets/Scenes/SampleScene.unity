@@ -2160,7 +2160,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baselineSec: 2
-  magScale: 0.42
+  magScale: 0.8
   magLP: 0.1
   motionAccThresh: 0.18
   motionSuppress: 0.6

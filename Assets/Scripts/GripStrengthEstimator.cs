@@ -7,7 +7,7 @@ public class GripStrengthEstimator : MonoBehaviour
 
     [Header("Magnetic (use magnitude ONLY)")]
     [Tooltip("Μικρότερο => πιο ευαίσθητο. Π.χ. 2–10 για |B|.")]
-    public float magScale = 0.42f;
+    public float magScale = 0.8f;
     [Range(0.01f, 0.3f)] public float magLP = 0.10f;
     float slowBmag = 0f;   // very slow tracker for high-pass
 
@@ -154,8 +154,20 @@ public class GripStrengthEstimator : MonoBehaviour
             zTouch = Mathf.Pow(zTouch, touchCurve);
         }
 
-        float wSum = Mathf.Max(wMag + wTouch, 1e-6f);
-        float z = (wMag / wSum) * zMag + (wTouch / wSum) * zTouch;
+        float z;
+
+        // Αν δεν υπάρχει touch 
+        if (!hasTouch)
+        {
+            z = zMag;   
+        }
+        else
+        {
+            // Αν υπάρχει touch 
+            float wSum = Mathf.Max(wMag + wTouch, 1e-6f);
+            z = (wMag / wSum) * zMag + (wTouch / wSum) * zTouch;
+        }
+
 
         //deadZone + curve 
         if (z < deadZone) z = 0f;
